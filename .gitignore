@@ -1,0 +1,7 @@
+*.log
+*.out
+*.toc
+*.aux
+
+*.tex
+*.png
