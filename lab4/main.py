@@ -51,7 +51,9 @@ df_nonpert = pd.DataFrame({
     '$\\hat{a}$': [ls_est_nonpert[0], rob_est_nonpert[0]],
     '$a$': [true_params[0], true_params[0]],
     '$\\hat{b}$': [ls_est_nonpert[1], rob_est_nonpert[1]],
-    '$b$': [true_params[1], true_params[1]]
+    '$b$': [true_params[1], true_params[1]],
+    '$\\frac{\\hat{a}}{a}$': [ls_est_nonpert[0]/true_params[0], rob_est_nonpert[0]/true_params[0]],
+    '$\\frac{\\hat{b}}{b}$': [ls_est_nonpert[1]/true_params[1], rob_est_nonpert[1]/true_params[1]]
 })
 
 df_pert = pd.DataFrame({
@@ -59,7 +61,9 @@ df_pert = pd.DataFrame({
     '$\\hat{a}$': [ls_est_pert[0], rob_est_pert[0]],
     '$a$': [true_params[0], true_params[0]],
     '$\\hat{b}$': [ls_est_pert[1], rob_est_pert[1]],
-    '$b$': [true_params[1], true_params[1]]
+    '$b$': [true_params[1], true_params[1]],
+    '$\\frac{\\hat{a}}{a}$': [ls_est_pert[0]/true_params[0], rob_est_pert[0]/true_params[0]],
+    '$\\frac{\\hat{b}}{b}$': [ls_est_pert[1]/true_params[1], rob_est_pert[1]/true_params[1]]
 })
 
 output_dir = "отчет/data"
