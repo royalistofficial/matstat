@@ -34,6 +34,61 @@ def ci_asymptotic(sample, alpha=0.05):
     sigma_upper = s * (1 - U) ** (-0.5)
     return m_lower, m_upper, sigma_lower, sigma_upper
 
+# def fmt_interval(name, iv):
+#     a = iv[0]
+#     b = iv[1]
+#     return f"${name}\\in[{a:.2f},\\,{b:.2f}]$"
+
+# np.random.seed(0)
+# samples = {20: np.random.normal(0, 1, 20), 100:np.random.normal(0, 1, 100)}
+
+# rows_normal = []
+# rows_asym   = []
+
+# for n, sample in samples.items():
+#     mL, mU, sL, sU = ci_normal(sample)
+#     rows_normal.append({
+#         "n": n,
+#         "$m$": [mL, mU],
+#         "$\\sigma$": [sL, sU]
+#     })
+
+#     mL2, mU2, sL2, sU2 = ci_asymptotic(sample)
+#     rows_asym.append({
+#         "n": n,
+#         "$m$": [mL2, mU2],
+#         "$\\sigma$": [sL2, sU2]
+#     })
+
+# df_normal = pd.DataFrame(rows_normal)
+# df_asym    = pd.DataFrame(rows_asym)
+
+# os.makedirs(out_dir, exist_ok=True)
+
+# df_normal.to_latex(
+#     os.path.join(out_dir, "normal_intervals.tex"),
+#     index=False,
+#     column_format="|c|c|c|",
+#     caption="Доверительные интервалы для параметров нормального распределения",
+#     label="tab:normal_intervals",
+#     escape=False,
+#     position="H",
+#     formatters={ "$m$": lambda x: fmt_interval('m', x),
+#                  "$\\sigma$": lambda x: fmt_interval('\\sigma', x) }
+# )
+
+# df_asym.to_latex(
+#     os.path.join(out_dir, "asym_intervals.tex"),
+#     index=False,
+#     column_format="|c|c|c|",
+#     caption="Доверительные интервалы для параметров произвольного распределения (асимптотический подход)",
+#     label="tab:asym_intervals",
+#     escape=False,
+#     position="H",
+#     formatters={ "$m$": lambda x: fmt_interval('m', x),
+#                  "$\\sigma$": lambda x: fmt_interval('\\sigma', x) }
+# )
+
 np.random.seed(0)
 samples = {20: np.random.normal(0, 1, 20), 100:np.random.normal(0, 1, 100)}
 
@@ -75,7 +130,3 @@ df_asym.to_latex(
     escape=False,
     position="H"
 )
-
-print(f"Файлы сохранены в папке '{out_dir}':")
-print(" - normal_intervals.tex")
-print(" - asym_intervals.tex")
