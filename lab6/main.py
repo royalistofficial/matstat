@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy import stats
+import matplotlib.pyplot as plt
 
 
 out_dir = "report/results"
@@ -34,115 +35,25 @@ def ci_asymptotic(sample, alpha=0.05):
     sigma_upper = s * (1 - U) ** (-0.5)
     return m_lower, m_upper, sigma_lower, sigma_upper
 
-# def fmt_interval(name, iv):
-#     a = iv[0]
-#     b = iv[1]
-#     return f"${name}\\in[{a:.2f},\\,{b:.2f}]$"
-
 # np.random.seed(0)
-# samples = {20: np.random.normal(0, 1, 20), 100:np.random.normal(0, 1, 100)}
-
-# rows_normal = []
-# rows_asym   = []
-
-# for n, sample in samples.items():
-#     mL, mU, sL, sU = ci_normal(sample)
-#     rows_normal.append({
-#         "n": n,
-#         "$m$": [mL, mU],
-#         "$\\sigma$": [sL, sU]
-#     })
-
-#     mL2, mU2, sL2, sU2 = ci_asymptotic(sample)
-#     rows_asym.append({
-#         "n": n,
-#         "$m$": [mL2, mU2],
-#         "$\\sigma$": [sL2, sU2]
-#     })
-
-# df_normal = pd.DataFrame(rows_normal)
-# df_asym    = pd.DataFrame(rows_asym)
-
-# os.makedirs(out_dir, exist_ok=True)
-
-# df_normal.to_latex(
-#     os.path.join(out_dir, "normal_intervals.tex"),
-#     index=False,
-#     column_format="|c|c|c|",
-#     caption="Доверительные интервалы для параметров нормального распределения",
-#     label="tab:normal_intervals",
-#     escape=False,
-#     position="H",
-#     formatters={ "$m$": lambda x: fmt_interval('m', x),
-#                  "$\\sigma$": lambda x: fmt_interval('\\sigma', x) }
-# )
-
-# df_asym.to_latex(
-#     os.path.join(out_dir, "asym_intervals.tex"),
-#     index=False,
-#     column_format="|c|c|c|",
-#     caption="Доверительные интервалы для параметров произвольного распределения (асимптотический подход)",
-#     label="tab:asym_intervals",
-#     escape=False,
-#     position="H",
-#     formatters={ "$m$": lambda x: fmt_interval('m', x),
-#                  "$\\sigma$": lambda x: fmt_interval('\\sigma', x) }
-# )
-
-np.random.seed(0)
-samples = {20: np.random.normal(0, 1, 20), 100:np.random.normal(0, 1, 100)}
-
-rows_normal = []
-rows_asym = []
-alpha = 0.05
-for n, sample in samples.items():
-    mL, mU, sL, sU = ci_normal(sample, alpha)
-    rows_normal.append({
-        "n": n,
-        "Доверительный интервал для $m$": f"{mL:.2f} < $m$ < {mU:.2f}",
-        "Доверительный интервал для $\\sigma$": f"{sL:.2f} < $\\sigma$ < {sU:.2f}"
-    })
-    mL2, mU2, sL2, sU2 = ci_asymptotic(sample, alpha)
-    rows_asym.append({
-        "n": n,
-        "Доверительный интервал для $m$": f"{mL2:.2f} < $m$ < {mU2:.2f}",
-        "Доверительный интервал для $\\sigma$": f"{sL2:.2f} < $\\sigma$ < {sU2:.2f}"
-    })
-
-df_normal = pd.DataFrame(rows_normal)
-df_asym = pd.DataFrame(rows_asym)
-
-df_normal.to_latex(
-    os.path.join(out_dir, "normal_intervals.tex"),
-    index=False,
-    column_format="|c|c|c|",
-    caption=f"Доверительные интервалы для параметров нормального распределения,  $\\alpha={alpha}$",
-    label="tab:normal_intervals",
-    escape=False,
-    position="H"
-)
-
-df_asym.to_latex(
-    os.path.join(out_dir, "asym_intervals.tex"),
-    index=False,
-    column_format="|c|c|c|",
-    caption=f"Доверительные интервалы для параметров произвольного распределения (асимптотический подход),  $\\alpha={alpha}$",
-    label="tab:asym_intervals",
-    escape=False,
-    position="H"
-)
-
+samples = {20: np.random.normal(0, 1, 20), 
+           100:np.random.normal(0, 1, 100)}
 
 alphas = np.linspace(0.05, 0.95, 19)  
-rows_normal = []
-rows_asym = []
+results = {
+    n: {"alpha": [], "mL": [], "mU": [], "sL": [], "sU": [], 
+        "mL2": [], "mU2": [], "sL2": [], "sU2": []}
+    for n in samples
+}
 
 for alpha in alphas:
+    rows_normal = []
+    rows_asym = []
+
     for n, sample in samples.items():
         mL, mU, sL, sU = ci_normal(sample, alpha)
         rows_normal.append({
             "n": n,
-            "$\\alpha$": f"${alpha:.2f}$",
             "Доверительный интервал для $m$": f"${mL:.2f} < m < {mU:.2f}$",
             "Доверительный интервал для $\\sigma$": f"${sL:.2f} < \\sigma < {sU:.2f}$"
         })
@@ -150,30 +61,112 @@ for alpha in alphas:
         mL2, mU2, sL2, sU2 = ci_asymptotic(sample, alpha)
         rows_asym.append({
             "n": n,
-            "$\\alpha$": f"${alpha:.2f}$",
             "Доверительный интервал для $m$": f"${mL2:.2f} < m < {mU2:.2f}$",
             "Доверительный интервал для $\\sigma$": f"${sL2:.2f} < \\sigma < {sU2:.2f}$"
         })
+        res = results[n]
+        res["alpha"].append(alpha)
+        res["mL"].append(mL)
+        res["mU"].append(mU)
+        res["sL"].append(sL)
+        res["sU"].append(sU)
+        res["mL2"].append(mL2)
+        res["mU2"].append(mU2)
+        res["sL2"].append(sL2)
+        res["sU2"].append(sU2)
 
-df_normal = pd.DataFrame(rows_normal)
-df_asym = pd.DataFrame(rows_asym)
+    df_normal = pd.DataFrame(rows_normal)
+    df_asym = pd.DataFrame(rows_asym)
 
-df_normal.to_latex(
-    os.path.join(out_dir, "normal_intervals_alpha.tex"),
-    index=False,
-    column_format="|c|c|c|c|",
-    caption="Доверительные интервалы для нормального распределения при разных $\\alpha$",
-    label="tab:normal_intervals_alpha",
-    escape=False,
-    position="H"
-)
+    df_normal.to_latex(
+        os.path.join(out_dir, f"normal_intervals_alpha_{round(alpha, 2)}.tex"),
+        index=False,
+        column_format="|c|c|c|c|",
+        caption=f"Доверительные интервалы для нормального распределения при $\\alpha = {round(alpha, 2)}$",
+        label="tab:normal_intervals_alpha",
+        escape=False,
+        position="H"
+    )
 
-df_asym.to_latex(
-    os.path.join(out_dir, "asym_intervals_alpha.tex"),
-    index=False,
-    column_format="|c|c|c|c|",
-    caption="Доверительные интервалы для произвольного распределения (асимптотический подход) при разных $\\alpha$",
-    label="tab:asym_intervals_alpha",
-    escape=False,
-    position="H"
-)
+    df_asym.to_latex(
+        os.path.join(out_dir, f"asym_intervals_alpha_{round(alpha, 2)}.tex"),
+        index=False,
+        column_format="|c|c|c|c|",
+        caption=f"Доверительные интервалы для произвольного распределения (асимптотический подход) при $\\alpha = {round(alpha, 2)}$",
+        label="tab:asym_intervals_alpha",
+        escape=False,
+        position="H"
+    )
+
+
+plt.figure(figsize=(12, 8))
+for n in samples:
+    a = results[n]["alpha"]
+
+    plt.fill_between(
+        a, results[n]["mL"], results[n]["mU"],
+        alpha=0.3,
+        label=rf"Нормальный, $n={n}$"
+    )
+    plt.fill_between(
+        a, results[n]["mL2"], results[n]["mU2"],
+        alpha=0.3,
+        label=rf"Асимптотический, $n={n}$"
+    )
+
+    plt.plot(a, results[n]["mL"], linestyle="--", label="_nolegend_")
+    plt.plot(a, results[n]["mU"], linestyle="--", label="_nolegend_")
+
+    plt.plot(a, results[n]["mL2"], linestyle=":", label="_nolegend_")
+    plt.plot(a, results[n]["mU2"], linestyle=":", label="_nolegend_")
+
+plt.legend(title=r"Метод и объём выборки", loc="best")
+
+plt.xlabel(r"$\alpha$")
+plt.ylabel(r"Граница доверительного интервала для $m$")
+plt.title(r"Зависимость доверительного интервала для $m$ от $\alpha$")
+plt.legend(title=r"$n$")
+plt.grid(True)
+plt.tight_layout()
+plt.savefig(os.path.join(out_dir, "m_intervals_vs_alpha.png"))
+plt.close()
+
+plt.figure(figsize=(12, 8))
+for n in samples:
+    a = results[n]["alpha"]
+
+    plt.fill_between(
+        a, results[n]["sL"], results[n]["sU"],
+        alpha=0.3,
+        label=rf"Нормальный, $n={n}$"
+    )
+
+    plt.fill_between(
+        a, results[n]["sL2"], results[n]["sU2"],
+        alpha=0.3,
+        label=rf"Асимптотический, $n={n}$"
+    )
+
+    plt.plot(a, results[n]["sL"], linestyle="--", label="_nolegend_")
+    plt.plot(a, results[n]["sU"], linestyle="--", label="_nolegend_")
+
+    plt.plot(a, results[n]["sL2"], linestyle=":", label="_nolegend_")
+    plt.plot(a, results[n]["sU2"], linestyle=":", label="_nolegend_")
+
+plt.legend(title=r"Метод и объём выборки", loc="best")
+
+plt.xlabel(r"$\alpha$")
+plt.ylabel(r"Граница доверительного интервала для $\sigma$")
+plt.title(r"Зависимость доверительного интервала для $\sigma$ от $\alpha$")
+plt.legend(title=r"$n$")
+plt.grid(True)
+plt.tight_layout()
+plt.savefig(os.path.join(out_dir, "sigma_intervals_vs_alpha.png"))
+plt.close()
+
+
+
+import subprocess
+report_directory = 'report'
+os.chdir('report')
+subprocess.run(['pdflatex', 'main.tex'], check=True)

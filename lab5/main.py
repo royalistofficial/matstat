@@ -1,88 +1,118 @@
+import os
 import numpy as np
-import scipy.stats as stats
 import pandas as pd
 import matplotlib.pyplot as plt
-import os
+from scipy.stats import norm, chi2
 
-def chi2_normality_test(sample, alpha=0.05, k=10, table_filename="report/data/table.tex", hist_filename="report/data/histogram.png"):
-    n = len(sample)
+def chi2_test(
+    sample,
+    alpha=0.05,
+    k=10,
+    out_dir='report/data',
+    table_fname='chi2_table.tex',
+    plot_fname='chi2_plot.png'
+):
+    os.makedirs(out_dir, exist_ok=True)
+    data = np.asarray(sample)
+    n = data.size
+    mu_hat = data.mean()
+    sigma_hat = data.std(ddof=0)
+    intervals = np.linspace(data.min(), data.max(), k + 1)
+    observed_freq, _ = np.histogram(data, bins=intervals)
+    probs = np.diff(norm.cdf(intervals, loc=mu_hat, scale=sigma_hat))
+    expected_freq = n * probs
+    chi2_stat = ((observed_freq - expected_freq) ** 2 / expected_freq).sum()
+    df = k - 1 - 2
+    chi2_crit = chi2.ppf(1 - alpha, df)
 
-    mu_hat = np.mean(sample)
-    sigma_hat = np.sqrt(np.mean((sample - mu_hat)**2))
+    table = pd.DataFrame({
+        "Интервал": [ f"$[{intervals[i]:.2f},\\ {intervals[i+1]:.2f})$" for i in range(k)],
+        "$n_i$": observed_freq,
+        "$n p_i$": np.round(expected_freq, 2),
+        "$\\frac{(n_i - n p_i)^2}{n p_i}$": np.round(((observed_freq - expected_freq) ** 2 / expected_freq), 2)
+    })
 
-    quantiles = np.linspace(0, 1, k+1)
-    bin_edges = stats.norm.ppf(quantiles, loc=mu_hat, scale=sigma_hat)
-    bin_edges[0] = sample.min() - 1
-    bin_edges[-1] = sample.max() + 1
-    observed_counts, _ = np.histogram(sample, bins=bin_edges)
-    expected_counts = np.full(k, n / k)
-    chi2_components = (observed_counts - expected_counts)**2 / expected_counts
-    chi2_statistic = np.sum(chi2_components)
-    df = k - 2 - 1
-    chi2_critical = stats.chi2.ppf(1 - alpha, df)
-    table_data = {
-        'Интервал': [str(i+1) for i in range(k)],
-        'Нижняя граница': [round(bin_edges[i], 3) for i in range(k)],
-        'Верхняя граница': [round(bin_edges[i+1], 3) for i in range(k)],
-        'Ожидаемая частота': [round(expected_counts[i], 3) for i in range(k)],
-        'Наблюдаемая частота': observed_counts.tolist(),
-        'Вклад в χ²': [round(chi2_components[i], 3) for i in range(k)]
-    }
-    df_table = pd.DataFrame(table_data)
-    test_result = "Не отвергаем H0" if chi2_statistic < chi2_critical else "Отвергаем H0"
-    print(f"Оценка параметров: μ̂ = {mu_hat:.4f}, σ̂ = {sigma_hat:.4f}\n")
-    print("Таблица вычислений для критерия χ²:")
-    print(df_table.to_string(index=False))
-    print("\nРезультаты проверки гипотезы:")
-    print(f"Статистика χ² = {chi2_statistic:.3f}")
-    print(f"Критическое значение χ² при df = {df} и α = {alpha}: {chi2_critical:.3f}")
-    print(f"Вывод: {test_result} (распределение {'соответствует' if test_result == 'Не отвергаем H0' else 'не соответствует'} N(μ̂, σ̂)).")
-    
-    x_values = np.linspace(sample.min(), sample.max(), 1000)
-    pdf_values = stats.norm.pdf(x_values, loc=mu_hat, scale=sigma_hat)
-    plt.figure(figsize=(8, 5))
-    plt.hist(sample, bins=bin_edges, density=True, label='Выборка')
-    plt.plot(x_values, pdf_values, label='Оцененная плотность N(μ̂, σ̂)')
-    plt.xlabel('x')
-    plt.ylabel('Плотность')
-    plt.title('Гистограмма выборки и оцененная нормальная плотность')
-    plt.legend()
-    plt.grid(True)
-    if not os.path.exists(os.path.dirname(hist_filename)):
-        os.makedirs(os.path.dirname(hist_filename))
-    plt.savefig(hist_filename)
-    plt.show()
+    table_path = os.path.join(out_dir, table_fname)
+    table.to_latex(
+        table_path,
+        index=False,
+        column_format='lccc',
+        caption=(
+            r"Таблица расчёта статистики $\chi^2$ "
+            r"для проверки нормальности выборки "
+            rf"$n={n},\ \alpha={alpha}$"
+        ),
+        label=r"tab:chi2_test",
+        escape=False,
+        bold_rows=True,
+        position='H',
+        float_format="%.2f"
+    )
 
-    if not os.path.exists(os.path.dirname(table_filename)):
-        os.makedirs(os.path.dirname(table_filename))
-    latex_table = df_table.to_latex(index=False, escape=False, caption='', label='tab:uniform', column_format='l|c', position='h!')
-    with open(table_filename, "w") as f:
-        f.write(latex_table)
-        
-    result = {
+    plt.figure(figsize=(8, 4))
+    plt.hist(data, bins=intervals, density=True, alpha=0.5)
+    x = np.linspace(data.min(), data.max(), 200)
+    plt.plot(x, norm.pdf(x, mu_hat, sigma_hat), 'r')
+    plt.title(
+        rf"$n={n},\ \hat{{\mu}}={mu_hat:.2f},\ \hat{{\sigma}}={sigma_hat:.2f},"
+        rf"\ \chi^2={chi2_stat:.2f}\ (\chi^2_{{crit}}={chi2_crit:.2f})$"
+    )
+    plt.xlabel("x")
+    plt.ylabel("Плотность")
+    plot_path = os.path.join(out_dir, plot_fname)
+    plt.savefig(plot_path, bbox_inches='tight')
+    plt.close()
+
+    return {
         'mu_hat': mu_hat,
         'sigma_hat': sigma_hat,
-        'chi2_statistic': chi2_statistic,
-        'chi2_critical': chi2_critical,
-        'degrees_of_freedom': df,
-        'table': df_table,
-        'test_result': test_result
+        'chi2_stat': chi2_stat,
+        'chi2_crit': chi2_crit,
+        'df': df,
+        'table_path': table_path,
+        'plot_path': plot_path
     }
-    return result
 
-if __name__ == '__main__':
-    np.random.seed(0)
-    
-    n = 100
-    sample_normal = np.random.normal(loc=0, scale=1, size=n)
-    print("Проверка выборки из нормального распределения (n=100):")
-    res_normal = chi2_normality_test(sample_normal, table_filename="report/data/normal_table.tex", hist_filename="report/data/normal_histogram.png")
-    
-    sample_uniform_20 = np.random.uniform(low=-1, high=1, size=20)
-    print("\nПроверка выборки из равномерного распределения (n=20):")
-    res_uniform_20 = chi2_normality_test(sample_uniform_20, table_filename="report/data/uniform20_table.tex", hist_filename="report/data/uniform20_histogram.png")
+np.random.seed(0)
+result = chi2_test(
+    np.random.normal(0, 1, 20),
+    alpha=0.05,
+    k=10,
+    table_fname='normal_20.tex',
+    plot_fname='normal_20.png'
+)
 
-    sample_uniform_100 = np.random.uniform(low=-1, high=1, size=100)
-    print("\nПроверка выборки из равномерного распределения (n=100):")
-    res_uniform_100 = chi2_normality_test(sample_uniform_100, table_filename="report/data/uniform100_table.tex", hist_filename="report/data/uniform100_histogram.png")
-    
+
+
+result = chi2_test(
+    np.random.normal(0, 1, 100),
+    alpha=0.05,
+    k=10,
+    table_fname='normal_100.tex',
+    plot_fname='normal_100.png'
+)
+
+
+result = chi2_test(
+    np.random.uniform(-np.sqrt(3), np.sqrt(3), 20),
+    alpha=0.05,
+    k=10,
+    table_fname='uniform_20.tex',
+    plot_fname='uniform_20.png'
+)
+
+
+
+result = chi2_test(
+    np.random.uniform(-np.sqrt(3), np.sqrt(3), 100),
+    alpha=0.05,
+    k=10,
+    table_fname='uniform_100.tex',
+    plot_fname='uniform_100.png'
+)
+
+
+import subprocess
+report_directory = 'report'
+os.chdir('report')
+subprocess.run(['pdflatex', 'main.tex'], check=True)
