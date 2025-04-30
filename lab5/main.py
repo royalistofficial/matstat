@@ -113,6 +113,5 @@ result = chi2_test(
 
 
 import subprocess
-report_directory = 'report'
 os.chdir('report')
 subprocess.run(['pdflatex', 'main.tex'], check=True)
