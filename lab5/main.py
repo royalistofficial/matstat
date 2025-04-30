@@ -55,7 +55,7 @@ def chi2_test(
     plt.plot(x, norm.pdf(x, mu_hat, sigma_hat), 'r')
     plt.title(
         rf"$n={n},\ \hat{{\mu}}={mu_hat:.2f},\ \hat{{\sigma}}={sigma_hat:.2f},"
-        rf"\ \chi^2={chi2_stat:.2f}\ (\chi^2_{{crit}}={chi2_crit:.2f})$"
+        rf"\ \chi^2={chi2_stat:.2f}\ (\chi^2_{{1-\alpha}}={chi2_crit:.2f})$"
     )
     plt.xlabel("x")
     plt.ylabel("Плотность")
