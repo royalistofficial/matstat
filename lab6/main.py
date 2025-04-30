@@ -100,67 +100,92 @@ for alpha in alphas:
 
 
 plt.figure(figsize=(12, 8))
-for n in samples:
+cmap = plt.get_cmap("tab10")
+
+for idx, n in enumerate(samples):
     a = results[n]["alpha"]
+    color = cmap(idx % cmap.N)
 
     plt.fill_between(
-        a, results[n]["mL"], results[n]["mU"],
+        a,
+        results[n]["mL"],
+        results[n]["mU"],
+        facecolor=color,
+        edgecolor='black',
+        hatch='///',
         alpha=0.3,
         label=rf"Нормальный, $n={n}$"
     )
+
     plt.fill_between(
-        a, results[n]["mL2"], results[n]["mU2"],
+        a,
+        results[n]["mL2"],
+        results[n]["mU2"],
+        facecolor=color,
+        edgecolor='black',
+        hatch='\\\\\\',
         alpha=0.3,
         label=rf"Асимптотический, $n={n}$"
     )
 
-    plt.plot(a, results[n]["mL"], linestyle="--", label="_nolegend_")
-    plt.plot(a, results[n]["mU"], linestyle="--", label="_nolegend_")
-
-    plt.plot(a, results[n]["mL2"], linestyle=":", label="_nolegend_")
-    plt.plot(a, results[n]["mU2"], linestyle=":", label="_nolegend_")
+    plt.plot(a, results[n]["mL"], linestyle="--", color=color, label="_nolegend_")
+    plt.plot(a, results[n]["mU"], linestyle="--", color=color, label="_nolegend_")
+    plt.plot(a, results[n]["mL2"], linestyle=":", color=color, label="_nolegend_")
+    plt.plot(a, results[n]["mU2"], linestyle=":", color=color, label="_nolegend_")
 
 plt.legend(title=r"Метод и объём выборки", loc="best")
-
 plt.xlabel(r"$\alpha$")
 plt.ylabel(r"Граница доверительного интервала для $m$")
 plt.title(r"Зависимость доверительного интервала для $m$ от $\alpha$")
-plt.legend(title=r"$n$")
 plt.grid(True)
 plt.tight_layout()
+
+os.makedirs(out_dir, exist_ok=True)
 plt.savefig(os.path.join(out_dir, "m_intervals_vs_alpha.png"))
 plt.close()
 
 plt.figure(figsize=(12, 8))
-for n in samples:
+cmap = plt.get_cmap("tab10")
+
+for idx, n in enumerate(samples):
     a = results[n]["alpha"]
+    color = cmap(idx % cmap.N)
 
     plt.fill_between(
-        a, results[n]["sL"], results[n]["sU"],
+        a,
+        results[n]["sL"],
+        results[n]["sU"],
+        facecolor=color,
+        edgecolor='black',
+        hatch='///',
         alpha=0.3,
         label=rf"Нормальный, $n={n}$"
     )
 
     plt.fill_between(
-        a, results[n]["sL2"], results[n]["sU2"],
+        a,
+        results[n]["sL2"],
+        results[n]["sU2"],
+        facecolor=color,
+        edgecolor='black',
+        hatch='\\\\\\',
         alpha=0.3,
         label=rf"Асимптотический, $n={n}$"
     )
 
-    plt.plot(a, results[n]["sL"], linestyle="--", label="_nolegend_")
-    plt.plot(a, results[n]["sU"], linestyle="--", label="_nolegend_")
-
-    plt.plot(a, results[n]["sL2"], linestyle=":", label="_nolegend_")
-    plt.plot(a, results[n]["sU2"], linestyle=":", label="_nolegend_")
+    plt.plot(a, results[n]["sL"], linestyle="--", color=color, label="_nolegend_")
+    plt.plot(a, results[n]["sU"], linestyle="--", color=color, label="_nolegend_")
+    plt.plot(a, results[n]["sL2"], linestyle=":", color=color, label="_nolegend_")
+    plt.plot(a, results[n]["sU2"], linestyle=":", color=color, label="_nolegend_")
 
 plt.legend(title=r"Метод и объём выборки", loc="best")
-
 plt.xlabel(r"$\alpha$")
 plt.ylabel(r"Граница доверительного интервала для $\sigma$")
 plt.title(r"Зависимость доверительного интервала для $\sigma$ от $\alpha$")
-plt.legend(title=r"$n$")
 plt.grid(True)
 plt.tight_layout()
+
+os.makedirs(out_dir, exist_ok=True)
 plt.savefig(os.path.join(out_dir, "sigma_intervals_vs_alpha.png"))
 plt.close()
 
