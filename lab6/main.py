@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy import stats
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 
@@ -39,12 +40,13 @@ def ci_asymptotic(sample, alpha=0.05):
 samples = {20: np.random.normal(0, 1, 20), 
            100:np.random.normal(0, 1, 100)}
 
-alphas = np.linspace(0.05, 0.95, 19)  
+alphas = (0.05, 0.5, 0.95) 
 results = {
     n: {"alpha": [], "mL": [], "mU": [], "sL": [], "sU": [], 
         "mL2": [], "mU2": [], "sL2": [], "sU2": []}
     for n in samples
 }
+
 
 for alpha in alphas:
     rows_normal = []
@@ -75,6 +77,7 @@ for alpha in alphas:
         res["sL2"].append(sL2)
         res["sU2"].append(sU2)
 
+
     df_normal = pd.DataFrame(rows_normal)
     df_asym = pd.DataFrame(rows_asym)
 
@@ -98,99 +101,3 @@ for alpha in alphas:
         position="H"
     )
 
-
-plt.figure(figsize=(12, 8))
-cmap = plt.get_cmap("tab10")
-
-for idx, n in enumerate(samples):
-    a = results[n]["alpha"]
-    color = cmap(idx % cmap.N)
-
-    plt.fill_between(
-        a,
-        results[n]["mL"],
-        results[n]["mU"],
-        facecolor=color,
-        edgecolor='black',
-        hatch='///',
-        alpha=0.3,
-        label=rf"Нормальный, $n={n}$"
-    )
-
-    plt.fill_between(
-        a,
-        results[n]["mL2"],
-        results[n]["mU2"],
-        facecolor=color,
-        edgecolor='black',
-        hatch='\\\\\\',
-        alpha=0.3,
-        label=rf"Асимптотический, $n={n}$"
-    )
-
-    plt.plot(a, results[n]["mL"], linestyle="--", color=color, label="_nolegend_")
-    plt.plot(a, results[n]["mU"], linestyle="--", color=color, label="_nolegend_")
-    plt.plot(a, results[n]["mL2"], linestyle=":", color=color, label="_nolegend_")
-    plt.plot(a, results[n]["mU2"], linestyle=":", color=color, label="_nolegend_")
-
-plt.legend(title=r"Метод и объём выборки", loc="best")
-plt.xlabel(r"$\alpha$")
-plt.ylabel(r"Граница доверительного интервала для $m$")
-plt.title(r"Зависимость доверительного интервала для $m$ от $\alpha$")
-plt.grid(True)
-plt.tight_layout()
-
-os.makedirs(out_dir, exist_ok=True)
-plt.savefig(os.path.join(out_dir, "m_intervals_vs_alpha.png"))
-plt.close()
-
-plt.figure(figsize=(12, 8))
-cmap = plt.get_cmap("tab10")
-
-for idx, n in enumerate(samples):
-    a = results[n]["alpha"]
-    color = cmap(idx % cmap.N)
-
-    plt.fill_between(
-        a,
-        results[n]["sL"],
-        results[n]["sU"],
-        facecolor=color,
-        edgecolor='black',
-        hatch='///',
-        alpha=0.3,
-        label=rf"Нормальный, $n={n}$"
-    )
-
-    plt.fill_between(
-        a,
-        results[n]["sL2"],
-        results[n]["sU2"],
-        facecolor=color,
-        edgecolor='black',
-        hatch='\\\\\\',
-        alpha=0.3,
-        label=rf"Асимптотический, $n={n}$"
-    )
-
-    plt.plot(a, results[n]["sL"], linestyle="--", color=color, label="_nolegend_")
-    plt.plot(a, results[n]["sU"], linestyle="--", color=color, label="_nolegend_")
-    plt.plot(a, results[n]["sL2"], linestyle=":", color=color, label="_nolegend_")
-    plt.plot(a, results[n]["sU2"], linestyle=":", color=color, label="_nolegend_")
-
-plt.legend(title=r"Метод и объём выборки", loc="best")
-plt.xlabel(r"$\alpha$")
-plt.ylabel(r"Граница доверительного интервала для $\sigma$")
-plt.title(r"Зависимость доверительного интервала для $\sigma$ от $\alpha$")
-plt.grid(True)
-plt.tight_layout()
-
-os.makedirs(out_dir, exist_ok=True)
-plt.savefig(os.path.join(out_dir, "sigma_intervals_vs_alpha.png"))
-plt.close()
-
-
-
-import subprocess
-os.chdir('report')
-subprocess.run(['pdflatex', 'main.tex'], check=True)
