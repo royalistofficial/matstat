@@ -64,7 +64,7 @@ for alpha in alphas:
 
     for n, sample in samples.items():
         mL, mU, sL, sU = ci_normal(sample, alpha)
-
+        plt.figure(figsize=(10, 6))
         plt.hist(sample, edgecolor='black', alpha=0.6)
 
         plt.axvspan(mL, mU, color='red', alpha=0.3, label=f"Доверительный интервал для $m$: ${mL:.2f} < m < {mU:.2f}$")
@@ -85,7 +85,7 @@ for alpha in alphas:
 
 
         mL2, mU2, sL2, sU2 = ci_asymptotic(sample, alpha)
-
+        plt.figure(figsize=(10, 6))
         plt.hist(sample, edgecolor='black', alpha=0.6)
 
         plt.axvspan(mL2, mU2, color='red', alpha=0.3, label=f"Доверительный интервал для $m$: ${mL:.2f} < m < {mU:.2f}$")
