@@ -40,12 +40,22 @@ def ci_asymptotic(sample, alpha=0.05):
 samples = {20: np.random.normal(0, 1, 20), 
            100:np.random.normal(0, 1, 100)}
 
-alphas = (0.05, 0.5, 0.95) 
+alphas = [0.05] 
 results = {
     n: {"alpha": [], "mL": [], "mU": [], "sL": [], "sU": [], 
         "mL2": [], "mU2": [], "sL2": [], "sU2": []}
     for n in samples
 }
+
+means_normal = []
+std_devs_normal = []
+mean_intervals_normal = []
+std_intervals_normal = []
+
+means_asym = []
+std_devs_asym = []
+mean_intervals_asym = []
+std_intervals_asym = []
 
 
 for alpha in alphas:
@@ -54,13 +64,53 @@ for alpha in alphas:
 
     for n, sample in samples.items():
         mL, mU, sL, sU = ci_normal(sample, alpha)
+
+        plt.hist(sample, edgecolor='black', alpha=0.6)
+
+        plt.axvspan(mL, mU, color='red', alpha=0.3, label=f"Доверительный интервал для $m$: ${mL:.2f} < m < {mU:.2f}$")
+
+        plt.axvspan(mL - sU, mU - sL, color='blue', alpha=0.3, label=f"Доверительный интервал для $\\sigma$: ${sL:.2f} < \\sigma < {sU:.2f}$")
+        plt.axvspan(mL + sL, mU + sU, color='blue', alpha=0.3)
+
+        plt.title(f'Гистограмма с доверительными интервалами для $m$ и $\\sigma$ для $\\alpha = {round(alpha, 2)}$, n = {n}')
+        plt.xlabel('Значение')
+        plt.ylabel('Частота')
+        
+        plt.legend() 
+
+        plt.savefig(os.path.join(out_dir, f'histogram_with_CI_{n}_alpha_{round(alpha, 2)}.png'), dpi=300)
+
+        # plt.show()
+        plt.close()
+
+
+        mL2, mU2, sL2, sU2 = ci_asymptotic(sample, alpha)
+
+        plt.hist(sample, edgecolor='black', alpha=0.6)
+
+        plt.axvspan(mL2, mU2, color='red', alpha=0.3, label=f"Доверительный интервал для $m$: ${mL:.2f} < m < {mU:.2f}$")
+
+        plt.axvspan(mL2 - sU2, mU2 - sL2, color='blue', alpha=0.3, label=f"Доверительный интервал для $\\sigma$: ${sL:.2f} < \\sigma < {sU:.2f}$")
+        plt.axvspan(mL2 + sL2, mU2 + sU2, color='blue', alpha=0.3)
+
+        plt.title(f'Гистограмма с доверительными интервалами для $m$ и $\\sigma$ для $\\alpha = {round(alpha, 2)}$, n = {n}')
+        plt.xlabel('Значение')
+        plt.ylabel('Частота')
+        
+        plt.legend() 
+
+        plt.savefig(os.path.join(out_dir, f'histogram_with_CI_2_{n}_alpha_{round(alpha, 2)}.png'), dpi=300)
+
+        # plt.show()
+        plt.close()
+
+
         rows_normal.append({
             "n": n,
             "Доверительный интервал для $m$": f"${mL:.2f} < m < {mU:.2f}$",
             "Доверительный интервал для $\\sigma$": f"${sL:.2f} < \\sigma < {sU:.2f}$"
         })
         
-        mL2, mU2, sL2, sU2 = ci_asymptotic(sample, alpha)
         rows_asym.append({
             "n": n,
             "Доверительный интервал для $m$": f"${mL2:.2f} < m < {mU2:.2f}$",
@@ -100,4 +150,4 @@ for alpha in alphas:
         escape=False,
         position="H"
     )
-
+    
