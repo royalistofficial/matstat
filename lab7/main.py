@@ -105,6 +105,48 @@ plt.tight_layout()
 plt.savefig(os.path.join(out_dir, 'jaccard_plot.png'), dpi=300)
 plt.close()
 
+
+
+
+
+a_values = np.linspace(1.0 - 0.1, 1.0 + 0.15, 51)
+j_inn = []
+j_out = []
+for a in a_values:
+    inn1_a = (inn1[0] + a, inn1[1] + a)
+    out1_a = (out1[0] + a, out1[1] + a)
+    j_inn.append(jaccard_interval(inn1_a, inn2))
+    j_out.append(jaccard_interval(out1_a, out2))
+
+df_j = pd.DataFrame({
+    'a': [str(round(i, 3)) for i in a_values],
+    '$J_{inn}$': list(j_inn),
+    '$J_{out}$': list(j_out)
+})
+df_j.to_latex(
+    os.path.join(out_dir, "jaccard_2.tex"),
+    index=False,
+    column_format="lrr",
+    caption="Значения индексов Жаккара при варьировании параметра $a$",
+    label="tab:jaccard_2",
+    escape=False,
+    bold_rows=True,
+    position="H",
+    float_format="%.3f"
+)
+
+plt.figure()
+plt.plot(a_values, j_inn, label='$J_{inn}$(a)')
+plt.plot(a_values, j_out, label='$J_{out}$(a)')
+plt.xlabel('a')
+plt.ylabel('Индексы Жаккара')
+plt.legend()
+plt.tight_layout()
+plt.savefig(os.path.join(out_dir, 'jaccard_plot_2.png'), dpi=300)
+plt.close()
+
+
+
 a_inn = max(j_inn)
 a_out = max(j_out)
 

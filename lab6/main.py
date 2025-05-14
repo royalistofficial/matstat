@@ -3,7 +3,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy import stats
-import seaborn as sns
 import matplotlib.pyplot as plt
 
 
@@ -36,43 +35,32 @@ def ci_asymptotic(sample, alpha=0.05):
     sigma_upper = s * (1 - U) ** (-0.5)
     return m_lower, m_upper, sigma_lower, sigma_upper
 
-# np.random.seed(0)
+np.random.seed(0)
 samples = {20: np.random.normal(0, 1, 20), 
            100:np.random.normal(0, 1, 100)}
 
 alphas = [0.05] 
-results = {
-    n: {"alpha": [], "mL": [], "mU": [], "sL": [], "sU": [], 
-        "mL2": [], "mU2": [], "sL2": [], "sU2": []}
-    for n in samples
-}
-
-means_normal = []
-std_devs_normal = []
-mean_intervals_normal = []
-std_intervals_normal = []
-
-means_asym = []
-std_devs_asym = []
-mean_intervals_asym = []
-std_intervals_asym = []
 
 
 for alpha in alphas:
     rows_normal = []
-    rows_asym = []
+
+    rows_normal_2 = []
 
     for n, sample in samples.items():
         mL, mU, sL, sU = ci_normal(sample, alpha)
+        x_inn = [mL + sL, mU - sL]
+        x_out = [mL - sU, mU + sU]
         plt.figure(figsize=(10, 6))
         plt.hist(sample, edgecolor='black', alpha=0.6)
 
-        plt.axvspan(mL, mU, color='red', alpha=0.3, label=f"Доверительный интервал для $m$: ${mL:.2f} < m < {mU:.2f}$")
+        # plt.axvspan(mL, mU, color='red', alpha=0.3, label=f"Доверительный интервал для $m$: ${mL:.2f} < m < {mU:.2f}$")
 
-        plt.axvspan(mL - sU, mU - sL, color='blue', alpha=0.3, label=f"Доверительный интервал для $\\sigma$: ${sL:.2f} < \\sigma < {sU:.2f}$")
-        plt.axvspan(mL + sL, mU + sU, color='blue', alpha=0.3)
+        plt.axvspan(*x_out, color='red', alpha=0.1, label=f"$x_{{out}}$")
+        plt.axvspan(*x_inn, color='green', alpha=0.3, label=f"$x_{{inn}}$")
 
-        plt.title(f'Гистограмма с доверительными интервалами для $m$ и $\\sigma$ для $\\alpha = {round(alpha, 2)}$, n = {n}')
+
+        plt.title(f'Гистограмма с $x_{{inn}}$ и $x_{{out}}$ для $\\alpha = {round(alpha, 2)}$, n = {n}')
         plt.xlabel('Значение')
         plt.ylabel('Частота')
         
@@ -84,52 +72,22 @@ for alpha in alphas:
         plt.close()
 
 
-        mL2, mU2, sL2, sU2 = ci_asymptotic(sample, alpha)
-        plt.figure(figsize=(10, 6))
-        plt.hist(sample, edgecolor='black', alpha=0.6)
-
-        plt.axvspan(mL2, mU2, color='red', alpha=0.3, label=f"Доверительный интервал для $m$: ${mL:.2f} < m < {mU:.2f}$")
-
-        plt.axvspan(mL2 - sU2, mU2 - sL2, color='blue', alpha=0.3, label=f"Доверительный интервал для $\\sigma$: ${sL:.2f} < \\sigma < {sU:.2f}$")
-        plt.axvspan(mL2 + sL2, mU2 + sU2, color='blue', alpha=0.3)
-
-        plt.title(f'Гистограмма с доверительными интервалами для $m$ и $\\sigma$ для $\\alpha = {round(alpha, 2)}$, n = {n}')
-        plt.xlabel('Значение')
-        plt.ylabel('Частота')
-        
-        plt.legend() 
-
-        plt.savefig(os.path.join(out_dir, f'histogram_with_CI_2_{n}_alpha_{round(alpha, 2)}.png'), dpi=300)
-
-        # plt.show()
-        plt.close()
-
-
         rows_normal.append({
             "n": n,
             "Доверительный интервал для $m$": f"${mL:.2f} < m < {mU:.2f}$",
             "Доверительный интервал для $\\sigma$": f"${sL:.2f} < \\sigma < {sU:.2f}$"
         })
-        
-        rows_asym.append({
+
+        rows_normal_2.append({
             "n": n,
-            "Доверительный интервал для $m$": f"${mL2:.2f} < m < {mU2:.2f}$",
-            "Доверительный интервал для $\\sigma$": f"${sL2:.2f} < \\sigma < {sU2:.2f}$"
+            "$x_{inn}$": f"[${x_inn[0]:.2f}, {x_inn[1]:.2f}$]",
+            "$x_{out}$": f"[${x_out[0]:.2f}, {x_out[1]:.2f}$]",
         })
-        res = results[n]
-        res["alpha"].append(alpha)
-        res["mL"].append(mL)
-        res["mU"].append(mU)
-        res["sL"].append(sL)
-        res["sU"].append(sU)
-        res["mL2"].append(mL2)
-        res["mU2"].append(mU2)
-        res["sL2"].append(sL2)
-        res["sU2"].append(sU2)
+        
+        
 
 
     df_normal = pd.DataFrame(rows_normal)
-    df_asym = pd.DataFrame(rows_asym)
 
     df_normal.to_latex(
         os.path.join(out_dir, f"normal_intervals_alpha_{round(alpha, 2)}.tex"),
@@ -141,6 +99,66 @@ for alpha in alphas:
         position="H"
     )
 
+    df_normal = pd.DataFrame(rows_normal_2)
+
+    df_normal.to_latex(
+        os.path.join(out_dir, f"normal_intervals_alpha_{round(alpha, 2)}_2.tex"),
+        index=False,
+        column_format="|c|c|c|c|",
+        caption=f"Доверительные интервалы для нормального распределения при $\\alpha = {round(alpha, 2)}$",
+        label="tab:normal_intervals_alpha_2",
+        escape=False,
+        position="H"
+    )
+
+samples = {20: np.random.uniform(-np.sqrt(3), np.sqrt(3), 20), 
+           100: np.random.uniform(-np.sqrt(3), np.sqrt(3), 100)}
+
+
+for alpha in alphas:
+    rows_asym = []
+    rows_asym_2 = []
+
+    for n, sample in samples.items():
+
+        mL, mU, sL, sU = ci_asymptotic(sample, alpha)
+
+        x_inn = [mL + sL, mU - sL]
+        x_out = [mL - sU, mU + sU]
+        plt.figure(figsize=(10, 6))
+        plt.hist(sample, edgecolor='black', alpha=0.6)
+
+        # plt.axvspan(mL, mU, color='red', alpha=0.3, label=f"Доверительный интервал для $m$: ${mL:.2f} < m < {mU:.2f}$")
+
+        plt.axvspan(*x_out, color='red', alpha=0.1, label=f"$x_{{out}}$")
+        plt.axvspan(*x_inn, color='green', alpha=0.3, label=f"$x_{{inn}}$")
+
+        plt.title(f'Гистограмма с $x_{{inn}}$ и $x_{{out}}$ для $\\alpha = {round(alpha, 2)}$, n = {n}')
+
+        plt.xlabel('Значение')
+        plt.ylabel('Частота')
+        
+        plt.legend() 
+
+        plt.savefig(os.path.join(out_dir, f'histogram_with_CI_2_{n}_alpha_{round(alpha, 2)}.png'), dpi=300)
+
+        # plt.show()
+        plt.close()
+
+        rows_asym.append({
+            "n": n,
+            "Доверительный интервал для $m$": f"${mL:.2f} < m < {mU:.2f}$",
+            "Доверительный интервал для $\\sigma$": f"${sL:.2f} < \\sigma < {sU:.2f}$"
+        })
+        rows_asym_2.append({
+            "n": n,
+            "$x_{inn}$": f"[${x_inn[0]:.2f}, {x_inn[1]:.2f}$]",
+            "$x_{out}$": f"[${x_out[0]:.2f}, {x_out[1]:.2f}$]",
+        })
+        
+
+    df_asym = pd.DataFrame(rows_asym)
+
     df_asym.to_latex(
         os.path.join(out_dir, f"asym_intervals_alpha_{round(alpha, 2)}.tex"),
         index=False,
@@ -150,4 +168,20 @@ for alpha in alphas:
         escape=False,
         position="H"
     )
+
+    df_asym = pd.DataFrame(rows_asym_2)
+
+    df_asym.to_latex(
+        os.path.join(out_dir, f"asym_intervals_alpha_{round(alpha, 2)}_2.tex"),
+        index=False,
+        column_format="|c|c|c|c|",
+        caption=f"Доверительные интервалы для произвольного распределения (асимптотический подход) при $\\alpha = {round(alpha, 2)}$",
+        label="tab:asym_intervals_alpha_2",
+        escape=False,
+        position="H"
+    )
     
+import subprocess
+os.chdir('report')
+subprocess.run(['pdflatex', 'main.tex'], check=True)
+

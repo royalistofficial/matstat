@@ -5,38 +5,38 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm, chi2
 
 def chi2_test(
-    sample,
-    alpha=0.05,
-    k=10,
+    data, alpha=0.05, k=10,
     out_dir='report/data',
     table_fname='chi2_table.tex',
-    plot_fname='chi2_plot.png'
-):
+    plot_fname='chi2_plot.png'):
+
     os.makedirs(out_dir, exist_ok=True)
-    data = np.asarray(sample)
     n = data.size
+
     mu_hat = data.mean()
     sigma_hat = data.std(ddof=0)
+    
     intervals = np.linspace(data.min(), data.max(), k + 1)
     observed_freq, _ = np.histogram(data, bins=intervals)
     probs = np.diff(norm.cdf(intervals, loc=mu_hat, scale=sigma_hat))
     expected_freq = n * probs
     chi2_stat = ((observed_freq - expected_freq) ** 2 / expected_freq).sum()
-    df = k - 1 - 2
+    df = k - 3
     chi2_crit = chi2.ppf(1 - alpha, df)
 
     table = pd.DataFrame({
         "Интервал": [ f"$[{intervals[i]:.2f},\\ {intervals[i+1]:.2f})$" for i in range(k)],
         "$n_i$": observed_freq,
-        "$n p_i$": np.round(expected_freq, 2),
-        "$\\frac{(n_i - n p_i)^2}{n p_i}$": np.round(((observed_freq - expected_freq) ** 2 / expected_freq), 2)
+        "$p_i$": probs,
+        "$n p_i$": expected_freq,
+        "$\\frac{(n_i - n p_i)^2}{n p_i}$": ((observed_freq - expected_freq) ** 2 / expected_freq)
     })
 
     table_path = os.path.join(out_dir, table_fname)
     table.to_latex(
         table_path,
         index=False,
-        column_format='lccc',
+        column_format='lcccc',
         caption=(
             r"Таблица расчёта статистики $\chi^2$ "
             r"для проверки нормальности выборки "
@@ -77,7 +77,7 @@ np.random.seed(0)
 result = chi2_test(
     np.random.normal(0, 1, 20),
     alpha=0.05,
-    k=10,
+    k=5,
     table_fname='normal_20.tex',
     plot_fname='normal_20.png'
 )
@@ -96,7 +96,7 @@ result = chi2_test(
 result = chi2_test(
     np.random.uniform(-np.sqrt(3), np.sqrt(3), 20),
     alpha=0.05,
-    k=10,
+    k=5,
     table_fname='uniform_20.tex',
     plot_fname='uniform_20.png'
 )
